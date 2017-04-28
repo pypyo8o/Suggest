@@ -26,15 +26,17 @@ public class MainActivity extends AppCompatActivity {
 
     private EditText inputText;
     private ArrayAdapter<String> resultAdapter;
+    private final static String KEY_LIST = "MainActivity.suggestedList"; //added
+    private ArrayList<String> suggestedList = new ArrayList<>(); // added
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
-        inputText = (EditText)findViewById(R.id.input_text);
-        Button suggestButton = (Button)findViewById(R.id.suggest_button);
-        ListView resultList = (ListView)findViewById(R.id.result_list);
+        inputText = (EditText) findViewById(R.id.input_text);
+        Button suggestButton = (Button) findViewById(R.id.suggest_button);
+        ListView resultList = (ListView) findViewById(R.id.result_list);
 
         suggestButton.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -49,13 +51,41 @@ public class MainActivity extends AppCompatActivity {
         resultList.setOnItemClickListener(new AdapterView.OnItemClickListener() {
             @Override
             public void onItemClick(AdapterView<?> parent, View view, int pos, long id) {
-                String text = (String)parent.getItemAtPosition(pos);
+                String text = (String) parent.getItemAtPosition(pos);
                 Intent intent = new Intent(Intent.ACTION_WEB_SEARCH);
                 intent.putExtra(SearchManager.QUERY, text);
                 startActivity(intent);
             }
         });
+
+        if (savedInstanceState != null) // added
+            suggestedList = savedInstanceState.getStringArrayList(KEY_LIST);
+            System.out.println(KEY_LIST);
+            System.out.println(suggestedList);
+
     }
+
+    @Override
+   protected void onSaveInstanceState(Bundle outState) { // added
+        super.onSaveInstanceState(outState);
+        outState.putStringArrayList(KEY_LIST, suggestedList);
+    }
+
+    @Override
+    protected void onResume() {
+        super.onResume();
+        handler.sendMessage(handler.obtainMessage(MSG_RESULT, suggestedList));
+    }
+
+    /*public void onClick(View v) { // added
+        switch (v.getId()) {
+            case R.id.suggest_button:
+                text = inputText.getText().toString();
+              //  System.out.println(text);
+                break;
+        }
+    }*/
+
 
     private final static int MSG_RESULT = 1111;
 
@@ -118,6 +148,8 @@ public class MainActivity extends AppCompatActivity {
             }
             if (result.size() == 0)
                 result.add(getString(R.string.no_suggestions));
+            suggestedList = result;
+
             handler.sendMessage(handler.obtainMessage(MSG_RESULT, result));
         }
     }
